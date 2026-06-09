@@ -25,12 +25,9 @@ jobs:
 
       - name: Prepare deployment files
         run: |
-          mkdir deploy
-          # Собранный фронтенд
+          mkdir -p deploy/event_organizer/backend
           cp -r frontend/dist/* deploy/
-          # Бекенд
-          cp -r backend deploy/event_organizer/backend
-          # Удаляем .env, чтобы не перезаписать на сервере
+          cp -r backend/* deploy/event_organizer/backend/
           rm -f deploy/event_organizer/backend/.env
 
       - name: Deploy to FTP
