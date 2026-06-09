@@ -25,16 +25,19 @@ jobs:
 
       - name: Prepare deployment files
         run: |
-          mkdir -p deploy/event_organizer/backend
+          mkdir -p deploy
           cp -r frontend/dist/* deploy/
-          cp -r backend/* deploy/event_organizer/backend/
+          mkdir -p deploy/event_organizer
+          cp -r backend deploy/event_organizer/
           rm -f deploy/event_organizer/backend/.env
 
       - name: Deploy to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
+          username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
           local-dir: ./deploy/
           server-dir: /public_html/
+          passive: true
