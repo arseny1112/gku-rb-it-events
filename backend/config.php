@@ -8,11 +8,11 @@ if (file_exists(__DIR__ . '/.env')) {
     $dotenv->load();
 }
 
-define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
-define('DB_PORT', $_ENV['DB_PORT'] ?? 3306);
-define('DB_NAME', $_ENV['DB_NAME'] ?? 'event_organizer');
-define('DB_USER', $_ENV['DB_USER'] ?? 'root');
-define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+define('DB_HOST', $_ENV['DB_HOST_PROD'] ?? $_ENV['DB_HOST']);
+define('DB_PORT', $_ENV['DB_PORT_PROD'] ?? $_ENV['DB_PORT']);
+define('DB_NAME', $_ENV['DB_NAME_PROD'] ?? $_ENV['DB_NAME']);
+define('DB_USER', $_ENV['DB_USER_PROD'] ?? $_ENV['DB_USER']);
+define('DB_PASS', $_ENV['DB_PASS_PROD'] ?? '');
 
 // Cloud.ru - берем из .env, не добавляем бакет в endpoint
 define('CLOUD_RU_ACCESS_KEY', $_ENV['CLOUD_RU_ACCESS_KEY'] ?? '');

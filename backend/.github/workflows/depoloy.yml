@@ -1,0 +1,43 @@
+name: Deploy via FTP
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Prepare deployment files
+        run: |
+          mkdir deploy
+          # Собранный фронтенд
+          cp -r frontend/dist/* deploy/
+          # Бекенд
+          cp -r backend deploy/event_organizer/backend
+          # Удаляем .env, чтобы не перезаписать на сервере
+          rm -f deploy/event_organizer/backend/.env
+
+      - name: Deploy to FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./deploy/
+          server-dir: /public_html/
