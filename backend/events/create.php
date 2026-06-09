@@ -1,0 +1,195 @@
+<?php
+// backend/events/create.php
+
+require_once '../db.php';
+require_once '../helpers.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
+$user = get_user_from_token($pdo);
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method !== 'POST') {
+    respond(['error' => 'Method not allowed'], 405);
+}
+
+$b = get_body();
+
+if (empty($b['title']) || empty($b['start'])) {
+    respond(['error' => 'Title and start are required'], 400);
+}
+
+$title = trim($b['title']);
+$desc = trim($b['description'] ?? '');
+$location = trim($b['location'] ?? '');
+$start = $b['start']; 
+$end = $b['end'] ?? null;
+
+try {
+    $pdo->beginTransaction();
+
+    $stmt = $pdo->prepare("
+        INSERT INTO events (title, description, location, start_datetime, end_datetime, created_by) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->execute([$title, $desc, $location, $start, $end, $user['id']]);
+    $event_id = $pdo->lastInsertId();
+
+    $stmt = $pdo->prepare("INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)");
+    $stmt->execute([$event_id, $user['id']]);
+
+    $event_dt = new DateTime($start);
+    $now = new DateTime();
+
+    $notify_day = clone $event_dt;
+    $notify_day->modify('-1 day');
+    
+    if ($notify_day > $now) {
+        $stmt = $pdo->prepare("
+            INSERT INTO notifications (event_id, user_id, notify_at, type) 
+            VALUES (?, ?, ?, 'day_before')
+        ");
+        $stmt->execute([$event_id, $user['id'], $notify_day->format('Y-m-d H:i:s')]);
+    }
+
+    $notify_hour = clone $event_dt;
+    $notify_hour->modify('-1 hour');
+    
+    $stmt = $pdo->prepare("
+        INSERT INTO notifications (event_id, user_id, notify_at, type) 
+        VALUES (?, ?, ?, 'hour_before')
+    ");
+    $stmt->execute([$event_id, $user['id'], $notify_hour->format('Y-m-d H:i:s')]);
+
+    $pdo->commit();
+
+    $notification_data = [
+        'title' => $title,
+        'start_datetime' => $start,
+        'location' => $location,
+        'description' => $desc,
+        'event_id' => $event_id
+    ];
+    
+    sendEmailNotification($pdo, $user['id'], 'event_created', $notification_data);
+    
+    sendVKNotification($pdo, $user['id'], 'event_created', $notification_data);
+
+    respond([
+        'message' => 'Событие создано',
+        'event_id' => $event_id
+    ]);
+
+} catch (PDOException $e) {
+    $pdo->rollBack();
+    error_log('Create event error: ' . $e->getMessage());
+    respond(['error' => 'Database error'], 500);
+}
+
+function sendEmailNotification($pdo, int $userId, string $type, array $data): void {
+    $stmt = $pdo->prepare("
+        SELECT u.email, s.email_notify 
+        FROM users u 
+        LEFT JOIN settings s ON s.user_id = u.id 
+        WHERE u.id = ?
+    ");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    
+    if (!$user || !$user['email_notify'] || empty($user['email'])) {
+        return; 
+    }
+    
+    if ($type === 'event_created') {
+        $subject = '📅 Создано новое мероприятие: ' . $data['title'];
+    } elseif ($type === 'event_reminder') {
+        $subject = '⏰ Напоминание: ' . $data['title'];
+    } else {
+        $subject = 'Уведомление';
+    }
+    
+    $message = "Здравствуйте!\n\n";
+    
+    if ($type === 'event_created') {
+        $message .= "Вы создали новое мероприятие:\n";
+    } elseif ($type === 'event_reminder') {
+        $message .= "Напоминаем о предстоящем мероприятии:\n";
+    }
+    
+    $message .= "📌 {$data['title']}\n";
+    
+    if (!empty($data['start_datetime'])) {
+        $dt = new DateTime($data['start_datetime']);
+        $message .= "🕐 {$dt->format('d.m.Y H:i')}\n";
+    }
+    
+    if (!empty($data['location'])) {
+        $message .= "📍 {$data['location']}\n";
+    }
+    
+    if (!empty($data['description'])) {
+        $message .= "\n{$data['description']}\n";
+    }
+    
+    require_once __DIR__ . '/../email.php';
+    sendEmail($user['email'], $subject, $message);
+}
+
+/**
+ * Отправка VK уведомления
+ */
+function sendVKNotification($pdo, int $userId, string $type, array $data): void {
+    $stmt = $pdo->prepare("
+        SELECT u.vk_id, s.vk_notify 
+        FROM users u 
+        LEFT JOIN settings s ON s.user_id = u.id 
+        WHERE u.id = ?
+    ");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    
+    if (!$user || !$user['vk_notify'] || empty($user['vk_id'])) {
+        return; 
+    }
+    
+    
+    $message .= "📌 {$data['title']}\n";
+    
+    if (!empty($data['start_datetime'])) {
+        $dt = new DateTime($data['start_datetime']);
+        $message .= "🕐 {$dt->format('d.m.Y H:i')}\n";
+    }
+    
+    if (!empty($data['location'])) {
+        $message .= "📍 {$data['location']}\n";
+    }
+    
+    $VKCLIENTID  = $_ENV['VK_CLIENT_ID'];
+    $REDIRECTURL = $_ENV['REDIRECT_URL'];
+    
+    $params = [
+        'user_id' => $user['vk_id'],
+        'message' => $message,
+        'random_id' => rand(0, 1000000000),
+        'group_id' => $groupId,
+        'access_token' => $accessToken,
+        'v' => '5.199'
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://api.vk.com/method/messages.send");
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    $result = json_decode($response, true);
+    if (isset($result['error'])) {
+        error_log("VK send error: " . json_encode($result['error']));
+    }
+}
+?>

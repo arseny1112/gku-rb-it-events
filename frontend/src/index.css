@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: 'LiberationSerif'; 
+    src: url('./assets/fonts/LiberationSerif-Regular.ttf') format('truetype'); 
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'LiberationSerif'; 
+    src: url('./assets/fonts/LiberationSerif-Bold.ttf') format('truetype'); 
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@layer base {
+  body {
+    font-family: 'LiberationSerif', serif; 
+  }
+}
+
+button{
+  cursor: pointer;
+}
+
+
+/* --- ВЕРСИЯ ДЛЯ СЛАБОВИДЯЩИХ (ГОСТ Р 52872 / Приказ № 103) --- */
+
+/* 1. Управление размером шрифта (Глобальное увеличение) */
+body.a11y-font-large {
+  font-size: 20px !important;
+}
+
+body.a11y-font-xlarge {
+  font-size: 24px !important;
+}
+
+body.a11y-font-large * {
+  font-size: inherit !important;
+}
+
+body.a11y-font-large h1 { font-size: 1.5em !important; }
+body.a11y-font-large h2 { font-size: 1.3em !important; }
+body.a11y-font-large h3 { font-size: 1.1em !important; }
+
+body.a11y-font-xlarge * {
+  font-size: inherit !important;
+}
+body.a11y-font-xlarge h1 { font-size: 1.5em !important; }
+body.a11y-font-xlarge h2 { font-size: 1.3em !important; }
+body.a11y-font-xlarge h3 { font-size: 1.1em !important; }
+
+
+/* 2. Скрытие изображений */
+body.a11y-no-images img:not(.a11y-keep):not([aria-hidden="true"]) {
+  display: none !important;
+}
+
+
+/* 3. Цветовые схемы (Жесткое переопределение цветов) */
+
+/* --- Черным по белому --- */
+body.a11y-black-white {
+  background-color: #fff !important;
+  color: #000 !important;
+}
+body.a11y-black-white * {
+  background-color: transparent !important;
+  color: #000 !important;
+  border-color: #000 !important;
+  box-shadow: none !important;
+}
+body.a11y-black-white a { 
+  color: #0000EE !important; 
+  text-decoration: underline !important; 
+}
+body.a11y-black-white button, 
+body.a11y-black-white input, 
+body.a11y-black-white select,
+body.a11y-black-white textarea {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 2px solid #000 !important;
+}
+
+body.a11y-white-black {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+body.a11y-white-black .fixed,
+body.a11y-white-black .absolute.z-50,
+body.a11y-white-black .bg-white {
+  background-color: #000 !important; 
+  color: #fff !important;
+  border: 2px solid #fff !important; 
+}
+
+/* Кнопки внутри модалок */
+body.a11y-white-black .fixed button,
+body.a11y-white-black .absolute.z-50 button {
+  background-color: #000 !important;
+  color: #fff !important;
+  border: 1px solid #fff !important;
+}
+
+
+body.a11y-white-black * {
+  background-color: transparent !important;
+  color: #fff !important;
+  border-color: #fff !important;
+  box-shadow: none !important;
+}
+body.a11y-white-black a { 
+  color: #FFFF00 !important; 
+  text-decoration: underline !important; 
+}
+body.a11y-white-black button, 
+body.a11y-white-black input, 
+body.a11y-white-black select,
+body.a11y-white-black textarea {
+  background-color: #000 !important;
+  color: #fff !important;
+  border: 2px solid #fff !important;
+}
+/* Инпуты делаем чуть светлее, чтобы их было видно на черном фоне */
+body.a11y-white-black input[type="text"],
+body.a11y-white-black input[type="password"],
+body.a11y-white-black input[type="email"],
+body.a11y-white-black input[type="search"] {
+  background-color: #333 !important;
+}
+
+/* --- Темно-синим по голубому --- */
+body.a11y-blue-beige {
+  background-color: #9DD1FF !important;
+  color: #000055 !important;
+}
+body.a11y-blue-beige * {
+  background-color: transparent !important;
+  color: #000055 !important;
+  border-color: #000055 !important;
+  box-shadow: none !important;
+}
+body.a11y-blue-beige a { 
+  color: #0000AA !important; 
+  text-decoration: underline !important; 
+}
+body.a11y-blue-beige button, 
+body.a11y-blue-beige input, 
+body.a11y-blue-beige select,
+body.a11y-blue-beige textarea {
+  background-color: #9DD1FF !important;
+  color: #000055 !important;
+  border: 2px solid #000055 !important;
+}
+
+/* 4. Фикс для Панели настроек (чтобы она сама не ломалась от своих же стилей) */
+.a11y-panel {
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid #000 !important;
+  z-index: 9999 !important;
+}
+.a11y-panel * {
+  /* Возвращаем нормальные цвета внутри панели */
+  color: #000 !important;
+  background-color: transparent !important;
+  border-color: #000 !important;
+}
+.a11y-panel button {
+  background-color: #fff !important;
+  border: 1px solid #000 !important;
+}
+.a11y-panel button.active {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+.a11y-panel button:hover {
+  background-color: #eee !important;
+}
+
+
+/* В index.css */
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+body.a11y-white-black button[aria-label*="VK"],
+body.a11y-white-black button[aria-label*="email"],
+body.a11y-white-black button[aria-label*="Переключить"] {
+  background-color: #000000 !important; /* Черный фон кнопки */
+  border: 2px solid #FFFFFF !important; /* Белая рамка */
+}
+
+body.a11y-white-black button[aria-label*="VK"] > div,
+body.a11y-white-black button[aria-label*="email"] > div,
+body.a11y-white-black button[aria-label*="Переключить"] > div {
+  background-color: #FFFFFF !important; /* Белый кружок */
+}
+
+body.a11y-black-white button[aria-label*="VK"],
+body.a11y-black-white button[aria-label*="email"],
+body.a11y-black-white button[aria-label*="Переключить"] {
+  background-color: #FFFFFF !important; /* Белый фон кнопки */
+  border: 2px solid #000000 !important; /* Черная рамка */
+}
+body.a11y-black-white button[aria-label*="VK"] > div,
+body.a11y-black-white button[aria-label*="email"] > div,
+body.a11y-black-white button[aria-label*="Переключить"] > div {
+  background-color: #000000 !important; /* Черный кружок */
+}
+
+body.a11y-white-black button[aria-label*="VK"].active-toggle,
+body.a11y-white-black button[aria-label*="email"].active-toggle {
+   background-color: #FFFFFF !important; /* Белая кнопка */
+   border-color: #FFFFFF !important;
+}
+body.a11y-white-black button[aria-label*="VK"].active-toggle > div,
+body.a11y-white-black button[aria-label*="email"].active-toggle > div {
+   background-color: #000000 !important; /* Черный кружок */
+}
