@@ -53,105 +53,78 @@ try {
 
     $accessKey = defined('CLOUD_RU_ACCESS_KEY') ? CLOUD_RU_ACCESS_KEY : ($_ENV['CLOUD_RU_ACCESS_KEY'] ?? null);
     $secretKey = defined('CLOUD_RU_SECRET_KEY') ? CLOUD_RU_SECRET_KEY : ($_ENV['CLOUD_RU_SECRET_KEY'] ?? null);
-    
-    $useCloud = !empty($accessKey) && !empty($secretKey);
 
-    if ($useCloud) {
-        try {
-            $region = defined('CLOUD_RU_REGION') ? CLOUD_RU_REGION : ($_ENV['CLOUD_RU_REGION'] ?? 'ru-1');
-            $endpoint = defined('CLOUD_RU_ENDPOINT') ? CLOUD_RU_ENDPOINT : ($_ENV['CLOUD_RU_ENDPOINT']);
-            $bucket = defined('CLOUD_RU_BUCKET') ? CLOUD_RU_BUCKET : ($_ENV['CLOUD_RU_BUCKET']);
-
-            $s3Client = new S3Client([
-                'version' => 'latest',
-                'region'  => $region,
-                'endpoint' => $endpoint,
-                'credentials' => [
-                    'key'    => $accessKey,
-                    'secret' => $secretKey,
-                ],
-                'use_path_style_endpoint' => true,
-            ]);
-            
-            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            $key = 'avatars/user_' . $userId . '/avatar_' . $userId . '_' . time() . '.' . $extension;
-            
-            $s3Client->putObject([
-                'Bucket'      => $bucket,
-                'Key'         => $key,
-                'Body'        => fopen($file['tmp_name'], 'r'),
-                'ACL'         => 'public-read',
-                'ContentType' => $file['type']
-            ]);
-            
-            $cmd = $s3Client->getCommand('GetObject', [
-                'Bucket' => $bucket,
-                'Key'    => $key,
-            ]);
-            
-            $request = $s3Client->createPresignedRequest($cmd, '+7 days');
-            $fileUrl = (string) $request->getUri();
-            
-            $stmt = $pdo->prepare('SELECT avatar FROM users WHERE id = ?');
-            $stmt->execute([$userId]);
-            $oldAvatar = $stmt->fetchColumn();
-            
-            if ($oldAvatar && strpos($oldAvatar, 's3.cloud.ru') !== false) {
-                try {
-                    $parsed = parse_url($oldAvatar);
-                    $path = ltrim($parsed['path'] ?? '', '/');
-                    $oldKey = preg_replace('/^' . preg_quote($bucket, '/') . '\//', '', $path);
-                    
-                    if (!empty($oldKey)) {
-                        $s3Client->deleteObject([
-                            'Bucket' => $bucket,
-                            'Key'    => $oldKey
-                        ]);
-                    }
-                } catch (Exception $e) {
-                    error_log("Ошибка удаления старого аватара: " . $e->getMessage());
-                }
-            }
-            
-            $stmt = $pdo->prepare('UPDATE users SET avatar = ? WHERE id = ?');
-            $stmt->execute([$fileUrl, $userId]);
-            
-            respond([
-                'success'    => true,
-                'avatar_url' => $fileUrl,
-                'storage'    => 'cloud'
-            ]);
-            
-        } catch (AwsException $e) {
-            error_log("S3 Upload Error: " . $e->getMessage());
-            respond(['error' => 'Ошибка загрузки в облако: ' . $e->getMessage()], 500);
-        }
-    } else {
-        $uploadDir = __DIR__ . '/uploads/avatars/user_' . $userId . '/';
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-        
-        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $filename = 'avatar_' . $userId . '_' . time() . '.' . $extension;
-        $filePath = $uploadDir . $filename;
-        
-        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
-            respond(['error' => 'Ошибка сохранения файла'], 500);
-        }
-        
-        chmod($filePath, 0644);
-        
-        $avatarPath = '/uploads/avatars/user_' . $userId . '/' . $filename;
-        $fullUrl = 'http://localhost/event_organizer/backend' . $avatarPath;
-        
-        $stmt = $pdo->prepare('UPDATE users SET avatar = ? WHERE id = ?');
-        $stmt->execute([$fullUrl, $userId]);
-        
-        respond([
-            'success'    => true,
-            'avatar_url' => $fullUrl,
-            'storage'    => 'local'
-        ]);
+    if (empty($accessKey) || empty($secretKey)) {
+        respond(['error' => 'Cloud storage not configured'], 500);
     }
+
+    $region = defined('CLOUD_RU_REGION') ? CLOUD_RU_REGION : ($_ENV['CLOUD_RU_REGION'] ?? 'ru-1');
+    $endpoint = defined('CLOUD_RU_ENDPOINT') ? CLOUD_RU_ENDPOINT : ($_ENV['CLOUD_RU_ENDPOINT'] ?? 'https://s3.cloud.ru');
+    $bucket = defined('CLOUD_RU_BUCKET') ? CLOUD_RU_BUCKET : ($_ENV['CLOUD_RU_BUCKET'] ?? '');
+
+    if (empty($bucket)) {
+        respond(['error' => 'Bucket not configured'], 500);
+    }
+
+    $s3Client = new S3Client([
+        'version' => 'latest',
+        'region'  => $region,
+        'endpoint' => $endpoint,
+        'credentials' => [
+            'key'    => $accessKey,
+            'secret' => $secretKey,
+        ],
+        'use_path_style_endpoint' => true,
+    ]);
+
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $key = 'avatars/user_' . $userId . '/avatar_' . $userId . '_' . time() . '.' . $extension;
+
+    $s3Client->putObject([
+        'Bucket'      => $bucket,
+        'Key'         => $key,
+        'Body'        => fopen($file['tmp_name'], 'r'),
+        'ACL'         => 'public-read',
+        'ContentType' => $file['type']
+    ]);
+
+    $cmd = $s3Client->getCommand('GetObject', [
+        'Bucket' => $bucket,
+        'Key'    => $key,
+    ]);
+
+    $request = $s3Client->createPresignedRequest($cmd, '+7 days');
+    $fileUrl = (string) $request->getUri();
+
+    // Удаляем старый аватар из S3, если он был
+    $stmt = $pdo->prepare('SELECT avatar FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    $oldAvatar = $stmt->fetchColumn();
+
+    if ($oldAvatar && strpos($oldAvatar, 's3.cloud.ru') !== false) {
+        try {
+            $parsed = parse_url($oldAvatar);
+            $path = ltrim($parsed['path'] ?? '', '/');
+            $oldKey = preg_replace('/^' . preg_quote($bucket, '/') . '\//', '', $path);
+            if (!empty($oldKey)) {
+                $s3Client->deleteObject([
+                    'Bucket' => $bucket,
+                    'Key'    => $oldKey
+                ]);
+            }
+        } catch (Exception $e) {
+            error_log("Ошибка удаления старого аватара: " . $e->getMessage());
+        }
+    }
+
+    $stmt = $pdo->prepare('UPDATE users SET avatar = ? WHERE id = ?');
+    $stmt->execute([$fileUrl, $userId]);
+
+    respond([
+        'success'    => true,
+        'avatar_url' => $fileUrl,
+        'storage'    => 'cloud'
+    ]);
 
 } catch (Throwable $e) {
     error_log("Upload Fatal: " . $e->getMessage());
