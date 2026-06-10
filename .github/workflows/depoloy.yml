@@ -39,9 +39,18 @@ jobs:
       - name: Prepare deployment files
         run: |
           mkdir -p deploy/event_organizer/backend
+          
+          # Копируем фронтенд
           cp -r frontend/dist/* deploy/
-          cp -r backend deploy/event_organizer/
-          rm -f deploy/event_organizer/backend/.env
+          
+          # Копируем бэкенд БЕЗ vendor, .env, node_modules
+          rsync -av \
+            --exclude='vendor/' \
+            --exclude='.env' \
+            --exclude='node_modules/' \
+            --exclude='.git/' \
+            --exclude='*.log' \
+            backend/ deploy/event_organizer/backend/
 
       - name: Deploy to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -51,3 +60,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./deploy/
           server-dir: /public_html/
+          exclude: |
+            **/vendor/**
+            **/.env
+            **/node_modules/**
+            **/.git/**
