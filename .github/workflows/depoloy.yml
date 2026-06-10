@@ -17,16 +17,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-
-      - name: Install Composer dependencies
-        run: |
-          cd backend
-          composer install --no-dev --optimize-autoloader
-
       - name: Build frontend
         run: |
           cd frontend

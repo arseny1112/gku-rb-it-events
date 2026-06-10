@@ -20,10 +20,13 @@ register_shutdown_function(function() {
 });
 
 try {
-    require_once __DIR__ . '/vendor/autoload.php';
     require_once __DIR__ . '/db.php';
     require_once __DIR__ . '/helpers.php';
     require_once __DIR__ . '/config.php';
+    require_once __DIR__ . '/vendor/autoload.php';
+
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
 
     $user = get_user_from_token($pdo);
     if (!$user) {
@@ -51,16 +54,16 @@ try {
         respond(['error' => 'Файл не более 5MB'], 422);
     }
 
-    $accessKey = defined('CLOUD_RU_ACCESS_KEY') ? CLOUD_RU_ACCESS_KEY : ($_ENV['CLOUD_RU_ACCESS_KEY'] ?? null);
-    $secretKey = defined('CLOUD_RU_SECRET_KEY') ? CLOUD_RU_SECRET_KEY : ($_ENV['CLOUD_RU_SECRET_KEY'] ?? null);
+    $accessKey =  $_ENV['CLOUD_RU_ACCESS_KEY'];
+    $secretKey = $_ENV['CLOUD_RU_SECRET_KEY'];
 
     if (empty($accessKey) || empty($secretKey)) {
         respond(['error' => 'Cloud storage not configured'], 500);
     }
 
-    $region = defined('CLOUD_RU_REGION') ? CLOUD_RU_REGION : ($_ENV['CLOUD_RU_REGION'] ?? 'ru-1');
-    $endpoint = defined('CLOUD_RU_ENDPOINT') ? CLOUD_RU_ENDPOINT : ($_ENV['CLOUD_RU_ENDPOINT'] ?? 'https://s3.cloud.ru');
-    $bucket = defined('CLOUD_RU_BUCKET') ? CLOUD_RU_BUCKET : ($_ENV['CLOUD_RU_BUCKET'] ?? '');
+    $region = $_ENV['CLOUD_RU_REGION'];
+    $endpoint = $_ENV['CLOUD_RU_ENDPOINT'];
+    $bucket = $_ENV['CLOUD_RU_BUCKET'];
 
     if (empty($bucket)) {
         respond(['error' => 'Bucket not configured'], 500);
