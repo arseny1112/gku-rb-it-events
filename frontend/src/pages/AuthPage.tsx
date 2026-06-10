@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register, saveAuth } from '../api/clients';
+import { config } from '../config';
 
 interface RegistrationData {
   email: string;
@@ -148,8 +149,9 @@ const AuthPage: React.FC = () => {
     localStorage.setItem('vk_device_id', deviceId)
     localStorage.setItem('vk_state', state)
 
-    const clientId = import.meta.env.VITE_VK_CLIENT_ID;
-    const redirectUri = import.meta.env.VITE_REDIRECT_URL;
+    
+  const clientId = config.VK_CLIENT_ID;
+  const redirectUri = config.REDIRECT_URL;
   
     window.location.href = `https://id.vk.com/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256&scope=email&device_id=${deviceId}`
   }

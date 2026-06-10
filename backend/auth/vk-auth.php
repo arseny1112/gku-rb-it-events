@@ -2,11 +2,13 @@
 // backend/uploads/auth/vk-auth.php
 session_start();
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
 
-$vkClientId = $_ENV['vkClientId'];
-$redirectUri = $_ENV['redirectUri'];
+$vkClientId = $_ENV['VK_CLIENT_ID'];
+$redirectUri = $_ENV['REDIRECT_URL'];
 
 $state = bin2hex(random_bytes(10));
 $_SESSION['vk_state'] = $state;
