@@ -15,8 +15,20 @@ require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../helpers.php';
 require_once __DIR__ . '/../config.php';
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
+
+
+$accessKey =  $_ENV['CLOUD_RU_ACCESS_KEY'];
+$secretKey = $_ENV['CLOUD_RU_SECRET_KEY'];
+$region = $_ENV['CLOUD_RU_REGION'];
+$endpoint = $_ENV['CLOUD_RU_ENDPOINT'];
+$bucket = $_ENV['CLOUD_RU_BUCKET'];
 
 // Проверяем авторизацию
 $user = get_user_from_token($pdo);
@@ -49,11 +61,11 @@ try {
         try {
             $client = new S3Client([
                 'version' => 'latest',
-                'region' => CLOUD_RU_REGION,
-                'endpoint' => CLOUD_RU_ENDPOINT,
+                'region' => $region,
+                'endpoint' => $endpoint,
                 'credentials' => [
-                    'key' => CLOUD_RU_ACCESS_KEY,
-                    'secret' => CLOUD_RU_SECRET_KEY,
+                    'key' => $accessKey,
+                    'secret' => $secretKey,
                 ],
                 'use_path_style_endpoint' => true,
             ]);
@@ -61,7 +73,7 @@ try {
             $key = "documents/{$userId}/{$doc['filename']}";
             
             $client->deleteObject([
-                'Bucket' => CLOUD_RU_BUCKET,
+                'Bucket' => $bucket,
                 'Key' => $key,
             ]);
             

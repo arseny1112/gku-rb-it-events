@@ -3,10 +3,14 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../helpers.php';
 require_once __DIR__ . '/../config.php';
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
 
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
@@ -29,11 +33,11 @@ if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
 $file = $_FILES['file'];
 $eventId = $_POST['event_id'] ?? null;
 
-$accessKey = CLOUD_RU_ACCESS_KEY;
-$secretKey = CLOUD_RU_SECRET_KEY;
-$bucket = CLOUD_RU_BUCKET;
-$region = CLOUD_RU_REGION;
-$endpoint = CLOUD_RU_ENDPOINT;
+$accessKey =  $_ENV['CLOUD_RU_ACCESS_KEY'];
+$secretKey = $_ENV['CLOUD_RU_SECRET_KEY'];
+$region = $_ENV['CLOUD_RU_REGION'];
+$endpoint = $_ENV['CLOUD_RU_ENDPOINT'];
+$bucket = $_ENV['CLOUD_RU_BUCKET'];
 
 if (empty($accessKey) || empty($secretKey)) {
     $uploadDir = __DIR__ . '/../uploads/documents/user_' . $userId . '/';
@@ -50,7 +54,7 @@ if (empty($accessKey) || empty($secretKey)) {
     }
     
     chmod($filePath, 0644);
-    $fileUrl = '/uploads/documents/user_' . $userId . '/' . $filename;
+    $fileUrl = (string) $request->getUri();
     
     try {
         $stmt = $pdo->prepare('INSERT INTO documents (event_id, user_id, filename, original_name, size, file_url, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
@@ -74,11 +78,11 @@ if (empty($accessKey) || empty($secretKey)) {
 try {
     $client = new S3Client([
         'version' => 'latest',
-        'region' => CLOUD_RU_REGION,
-        'endpoint' => CLOUD_RU_ENDPOINT,
+        'region' => $region,
+        'endpoint' => $endpoint,
         'credentials' => [
-            'key' => CLOUD_RU_ACCESS_KEY,
-            'secret' => CLOUD_RU_SECRET_KEY,
+            'key' => $accessKey,
+            'secret' => $secretKey,
         ],
         'use_path_style_endpoint' => true, 
     ]);
