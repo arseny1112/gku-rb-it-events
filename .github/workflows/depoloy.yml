@@ -25,7 +25,6 @@ jobs:
       - name: Build frontend
         env:
           VITE_VK_CLIENT_ID: ${{ secrets.VITE_VK_CLIENT_ID }}
-          VITE_VK_GROUP_ID: ${{ secrets.VITE_VK_GROUP_ID }}
         run: npm run build
         working-directory: ./frontend
       
