@@ -1,40 +1,40 @@
-name: Deploy via FTP
+name: Deploy to SpaceWeb
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
+      
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend  
+      
       - name: Build frontend
-        run: |
-          cd frontend
-          npm ci
-          npm run build
-
-      - name: Prepare deployment files
-        run: |
-          mkdir -p deploy/event_organizer/backend
-          cp -r frontend/dist/* deploy/
-          cp -r backend deploy/event_organizer/
-          rm -f deploy/event_organizer/backend/.env
-
-      - name: Deploy to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        env:
+          VITE_VK_CLIENT_ID: ${{ secrets.VITE_VK_CLIENT_ID }}
+          VITE_VK_GROUP_ID: ${{ secrets.VITE_VK_GROUP_ID }}
+        run: npm run build
+        working-directory: ./frontend
+      
+      - name: Deploy to SpaceWeb
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./deploy/
-          server-dir: /public_html/
+          host: fvh3.sweb.ru
+          username: arsenijsto
+          password: ${{ secrets.SPACEWEB_PASSWORD }}
+          source: "./frontend/dist/*"
+          target: "/home/a/arsenijsto/public_html/"
+          strip_components: 2
