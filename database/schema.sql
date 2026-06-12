@@ -133,7 +133,7 @@ CREATE TABLE `users` (
   `password_hash` varchar(255) DEFAULT NULL,
   `avatar` varchar(255) DEFAULT NULL,
   `vk_id` varchar(50) DEFAULT NULL,
-  `vk_token` varchar(255) DEFAULT NULL,
+  `vk_token` text DEFAULT NULL,
   `auth_token` varchar(64) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   `role` varchar(100) DEFAULT 'user',
