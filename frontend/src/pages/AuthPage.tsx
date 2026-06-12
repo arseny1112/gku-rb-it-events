@@ -195,7 +195,7 @@ const AuthPage: React.FC = () => {
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Введите логин"
+                placeholder="Введите email"
                 disabled={isLoading}
                 className="w-full px-[12px] py-[14px] border-[1px] border-[#C0C9BB] rounded-[15px] text-[#047857] placeholder-[#64748B] outline-none focus:border-[#047857] transition-colors disabled:opacity-50"
               />

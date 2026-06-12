@@ -1,6 +1,7 @@
 <?php
-require_once '../../.php';
-require_once '../../helpers.php';
+require_once '../config.php';
+require_once '../helpers.php';
+require_once '../db.php'; 
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(['error' => 'Method not allowed'], 405);
 
@@ -17,9 +18,11 @@ $user = $stmt->fetch();
 if (!$user || !password_verify($pass, $user['password_hash']))
     respond(['error' => 'Неверный email или пароль'], 401);
 
-    respond([
-        'token' => $user['vk_token'],
-        'name'  => $user['name'],
-        'email' => $user['email'],
-        'role'  => $user['role'],
-    ]);
+$pdo->prepare('UPDATE users SET last_login = NOW() WHERE id = ?')->execute([$user['id']]);
+
+respond([
+    'token' => $user['auth_token'],  
+    'name'  => $user['name'],
+    'email' => $user['email'],
+    'role'  => $user['role'],
+]);
