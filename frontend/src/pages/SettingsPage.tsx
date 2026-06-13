@@ -86,7 +86,7 @@ const SettingsPage: React.FC = () => {
   const handleVkModalConfirm = async () => {
     setVkEnabled(true)
     setShowVkModal(false)
-    window.open(import.meta.env.VITE_VK_DIALOG_URL, '_blank')
+    window.open('https://vk.com/im?sel=-238638283', '_blank')
   
     setIsSaving(true)
     try {
@@ -269,7 +269,7 @@ const SettingsPage: React.FC = () => {
                   <span className="hidden sm:inline">VK уведомления включены</span>
                   <span className="sm:hidden">VK включены</span>
                 </div>
-                {/* group_id у группы вк */}
+                {/* ссылка на диалог и group_id у группы вк */}
                 <a
                   href={'https://vk.com/im?sel=-238638283'}  
                   target="_blank"
