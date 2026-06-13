@@ -269,8 +269,9 @@ const SettingsPage: React.FC = () => {
                   <span className="hidden sm:inline">VK уведомления включены</span>
                   <span className="sm:hidden">VK включены</span>
                 </div>
+                {/* group_id у группы вк */}
                 <a
-                  href={import.meta.env.VITE_VK_DIALOG_URL}
+                  href={'https://vk.com/im?sel=-238638283'}  
                   target="_blank"
                   rel="noreferrer"
                   className="text-[11px] sm:text-[12px] text-[#0077FF] hover:underline whitespace-nowrap"
