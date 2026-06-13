@@ -1,13 +1,15 @@
 <?php
 // backend/cron.php
+date_default_timezone_set('Asia/Yekaterinburg');
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/email.php'; 
 require_once __DIR__ . '/vendor/autoload.php';
 
-
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
+
+$pdo->exec("SET time_zone = '+05:00'");
 
 $lockFile = __DIR__ . '/cron.lock';
 
@@ -50,6 +52,7 @@ $deleteHourStmt = $pdo->prepare("
     JOIN events e ON n.event_id = e.id
     WHERE n.type = 'hour_before' 
       AND n.sent = 0
+      AND e.start_datetime > NOW()
       AND TIMESTAMPDIFF(HOUR, NOW(), e.start_datetime) > 2
 ");
 $deleteHourStmt->execute();
