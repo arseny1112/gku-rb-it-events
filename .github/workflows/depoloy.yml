@@ -31,7 +31,7 @@ jobs:
         env:
           VITE_VK_CLIENT_ID: ${{ secrets.VITE_VK_CLIENT_ID }}
           VITE_VK_DIALOG_URL: ${{ secrets.VITE_VK_DIALOG_URL }}
-          VITE_VK_GROUP_ID: ${{ secrets.VITE_VK_GROUP_ID }}
+          VITE_VK_GROUP_ID: "https://vk.com/im?sel=-${{ secrets.VITE_VK_GROUP_ID }}"
         run: |
           cd frontend
           npm ci
